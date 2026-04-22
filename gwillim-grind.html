@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gwillim Grind — Carto, Cranks &amp; Carnage</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --forest: #2d4a3e;
+      --trail: #c5a55a;
+      --dust: #f4efe4;
+      --ember: #d45d2b;
+      --slate: #3a3a3a;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--dust);
+      color: var(--slate);
+      min-height: 100vh;
+      position: relative;
+    }
+
+    /* ── Topo background ── */
+    .topo-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .topo-bg svg { width: 100%; height: 100%; }
+
+    /* ── Top bar ── */
+    .top-bar {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 2rem;
+      background: rgba(45, 74, 62, 0.92);
+      backdrop-filter: blur(8px);
+    }
+    .top-bar a {
+      color: var(--trail);
+      text-decoration: none;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.1rem;
+      letter-spacing: 0.08em;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: color 0.2s;
+    }
+    .top-bar a:hover { color: #fff; }
+    .top-bar a svg { width: 16px; height: 16px; fill: currentColor; }
+    .top-bar h2 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.5rem;
+      color: #fff;
+      letter-spacing: 0.06em;
+    }
+
+    /* ── Main content ── */
+    .content {
+      position: relative;
+      z-index: 2;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 3rem 2rem;
+      animation: fadeUp 0.8s ease-out;
+    }
+
+    .route-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    .route-header h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(2.5rem, 7vw, 4.5rem);
+      color: var(--forest);
+      letter-spacing: 0.04em;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+    .route-header .subtitle {
+      font-size: 1rem;
+      font-weight: 300;
+      color: var(--forest);
+      opacity: 0.6;
+    }
+    .route-header .divider {
+      width: 60px;
+      height: 3px;
+      background: linear-gradient(90deg, var(--trail), var(--ember));
+      border-radius: 2px;
+      margin: 1.2rem auto 0;
+    }
+
+    /* ── Placeholder card ── */
+    .placeholder-card {
+      background: rgba(255,255,255,0.65);
+      backdrop-filter: blur(10px);
+      border: 2px dashed rgba(45,74,62,0.2);
+      border-radius: 20px;
+      padding: 4rem 2rem;
+      text-align: center;
+    }
+    .placeholder-card svg {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 1.5rem;
+      opacity: 0.3;
+    }
+    .placeholder-card h3 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.6rem;
+      color: var(--forest);
+      letter-spacing: 0.06em;
+      margin-bottom: 0.5rem;
+    }
+    .placeholder-card p {
+      font-size: 0.9rem;
+      opacity: 0.5;
+      max-width: 400px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* ── Itinerary ── */
+    .itinerary {
+      background: rgba(255,255,255,0.65);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(45,74,62,0.1);
+      border-radius: 20px;
+      padding: 3rem 2.5rem;
+      margin-top: 2rem;
+      animation: fadeUp 1s ease-out;
+    }
+    .itinerary .intro {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.5rem;
+      color: var(--ember);
+      letter-spacing: 0.04em;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .itinerary .day {
+      margin-bottom: 2rem;
+      padding-left: 1.2rem;
+      border-left: 3px solid var(--trail);
+    }
+    .itinerary .day:last-child { margin-bottom: 0; }
+    .itinerary .day h3 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.25rem;
+      color: var(--forest);
+      letter-spacing: 0.06em;
+      margin-bottom: 0.4rem;
+    }
+    .itinerary .day p {
+      font-size: 0.9rem;
+      line-height: 1.7;
+      opacity: 0.7;
+    }
+
+    /* ── Stats Infographic ── */
+    .stats-section {
+      margin-top: 2rem;
+      animation: fadeUp 1.2s ease-out;
+    }
+    .stats-section h2 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.8rem;
+      color: var(--forest);
+      letter-spacing: 0.06em;
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.2rem;
+    }
+    .stat-card {
+      background: rgba(255,255,255,0.65);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(45,74,62,0.1);
+      border-radius: 16px;
+      padding: 1.8rem 1.2rem;
+      text-align: center;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(45,74,62,0.12);
+    }
+    .stat-card .day-label {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.3rem;
+      color: var(--forest);
+      letter-spacing: 0.06em;
+      margin-bottom: 1rem;
+    }
+    .stat-card .stat-icon {
+      width: 40px;
+      height: 40px;
+      margin: 0 auto 0.6rem;
+    }
+    .stat-card .stat-value {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2rem;
+      color: var(--ember);
+      line-height: 1;
+    }
+    .stat-card .stat-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      opacity: 0.5;
+      margin-top: 0.2rem;
+    }
+    .stat-row {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-top: 0.8rem;
+    }
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .stat-divider {
+      width: 40px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--trail), var(--ember));
+      border-radius: 1px;
+      margin: 0.8rem auto;
+    }
+    /* Elevation bar visual */
+    .elev-bar-wrap {
+      width: 100%;
+      height: 6px;
+      background: rgba(45,74,62,0.08);
+      border-radius: 3px;
+      margin-top: 1rem;
+      overflow: hidden;
+    }
+    .elev-bar {
+      height: 100%;
+      border-radius: 3px;
+      background: linear-gradient(90deg, var(--trail), var(--ember));
+    }
+    .stat-card .elev-direction {
+      font-size: 0.7rem;
+      opacity: 0.45;
+      margin-top: 0.3rem;
+    }
+    @media (max-width: 640px) {
+      .stats-grid { grid-template-columns: 1fr; }
+      .top-bar { padding: 0.75rem 1rem; }
+      .top-bar a { font-size: 0.95rem; }
+      .top-bar h2 { font-size: 1.1rem; }
+      .content { padding: 2rem 1rem; }
+      .placeholder-card { padding: 1.5rem 1rem; border-radius: 14px; }
+      .itinerary { padding: 1.8rem 1.2rem; border-radius: 14px; }
+      .stat-card { padding: 1.4rem 1rem; border-radius: 12px; }
+      .alt-card { padding: 1.8rem 1.2rem; border-radius: 14px; }
+      .route-header { margin-bottom: 2rem; }
+    }
+
+    /* ── Alternatives section ── */
+    .alt-section {
+      margin-top: 2rem;
+      animation: fadeUp 1.4s ease-out;
+    }
+    .alt-card {
+      background: rgba(45, 74, 62, 0.92);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(197, 165, 90, 0.2);
+      border-radius: 20px;
+      padding: 2.5rem 2.5rem 2rem;
+      margin-bottom: 1.5rem;
+    }
+    .alt-card h3 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.5rem;
+      color: var(--trail);
+      letter-spacing: 0.06em;
+      text-align: center;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+    }
+    .alt-card h3 svg {
+      width: 28px;
+      height: 28px;
+      flex-shrink: 0;
+    }
+    .alt-card ol {
+      list-style: none;
+      counter-reset: alt-counter;
+      padding: 0;
+    }
+    .alt-card ol li {
+      counter-increment: alt-counter;
+      position: relative;
+      padding-left: 2.2rem;
+      margin-bottom: 1.2rem;
+      font-size: 0.9rem;
+      line-height: 1.7;
+      color: rgba(244, 239, 228, 0.8);
+    }
+    .alt-card ol li:last-child { margin-bottom: 0; }
+    .alt-card ol li::before {
+      content: counter(alt-counter) ".";
+      position: absolute;
+      left: 0;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.2rem;
+      color: var(--trail);
+      line-height: 1.5;
+    }
+    .alt-card--harder {
+      background: rgba(58, 58, 58, 0.92);
+      border-color: rgba(212, 93, 43, 0.3);
+    }
+    .alt-card--harder h3 {
+      color: var(--ember);
+    }
+    .alt-card--harder ol li::before {
+      color: var(--ember);
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Topo background ── -->
+<div class="topo-bg">
+  <svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" viewBox="0 0 1440 900">
+    <defs>
+      <pattern id="topoSmall" width="60" height="60" patternUnits="userSpaceOnUse">
+        <path d="M0 30 Q15 10 30 30 T60 30" fill="none" stroke="rgba(76,126,98,0.12)" stroke-width="0.8"/>
+        <path d="M0 50 Q20 35 40 50 T80 50" fill="none" stroke="rgba(76,126,98,0.07)" stroke-width="0.5"/>
+      </pattern>
+      <pattern id="topoLarge" width="200" height="200" patternUnits="userSpaceOnUse">
+        <ellipse cx="100" cy="100" rx="80" ry="55" fill="none" stroke="rgba(76,126,98,0.18)" stroke-width="1"/>
+        <ellipse cx="100" cy="100" rx="55" ry="35" fill="none" stroke="rgba(76,126,98,0.14)" stroke-width="0.8"/>
+        <ellipse cx="100" cy="100" rx="30" ry="18" fill="none" stroke="rgba(76,126,98,0.10)" stroke-width="0.6"/>
+      </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="var(--dust)"/>
+    <rect width="100%" height="100%" fill="url(#topoSmall)"/>
+    <rect width="100%" height="100%" fill="url(#topoLarge)"/>
+    <path d="M-20 200 Q200 120 500 220 T1000 180 T1460 250" fill="none" stroke="rgba(76,126,98,0.22)" stroke-width="1.5"/>
+    <path d="M-20 400 Q300 340 600 420 T1100 370 T1460 430" fill="none" stroke="rgba(76,126,98,0.18)" stroke-width="1.2"/>
+    <path d="M-20 600 Q250 550 550 620 T1050 580 T1460 640" fill="none" stroke="rgba(76,126,98,0.15)" stroke-width="1"/>
+  </svg>
+</div>
+
+<!-- ── Top bar ── -->
+<nav class="top-bar">
+  <a href="index.html">
+    <svg viewBox="0 0 16 16"><path d="M11 1L4 8l7 7"/></svg>
+    Back to Home
+  </a>
+  <h2>Carto, Cranks &amp; Carnage</h2>
+</nav>
+
+<!-- ── Content ── -->
+<main class="content">
+  <div class="route-header">
+    <h1>Gwillim Grind</h1>
+    <p class="subtitle">I hope you like hill climbs....</p>
+    <div class="divider"></div>
+  </div>
+
+  <div class="placeholder-card">
+    <video controls playsinline style="width:100%; max-width:800px; border-radius:12px;">
+      <source src="Videos/Gwillim_Grind_Video_Edit.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+  </div>
+
+  <div class="placeholder-card">
+    <iframe src="map.html" style="width:100%; max-width:800px; height:500px; border:none; border-radius:12px;"></iframe>
+  </div>
+
+  <div class="itinerary">
+    <p class="intro">Between July and September, when the hiking trail is clear?</p>
+
+    <div class="day">
+      <h3>Day 1</h3>
+      <p>Start at the Dam, possibly with a pint, and ride a mere 40km with around 200m of elevation gain. Northwards up the rail trail, past Passmore and in towards the Valhallas.</p>
+    </div>
+
+    <div class="day">
+      <h3>Night 1</h3>
+      <p>After a stupidly easy day, chill at the Little Slocan River rec site for the night.</p>
+    </div>
+
+    <div class="day">
+      <h3>Day 2</h3>
+      <p>A leisurely 20km biking distance and a paltry 940m elevation gain to the Gwillim Lakes hike trailhead. Stash the bikes and begin the ramble up to the lakes camp site. It&rsquo;s only a 5.5km hike with another 500m of elevation gain. 1440m of up in a day is fine, eh?! You get a night&rsquo;s rest at the top after all&hellip;</p>
+    </div>
+
+    <div class="day">
+      <h3>Night 2</h3>
+      <p>After soaking your toasted legs in the lake, sleep like a baby in the heart of the Valhallas, at the Gwillim Lakes camp site.</p>
+    </div>
+
+    <div class="day">
+      <h3>Day 3</h3>
+      <p>So much down&hellip;.. Hike back down to the bikes and then a brake burner, all the way to Slocan, for a beer. With a casual cool down on the rail trail back to the Dam&hellip;. for a beer.</p>
+    </div>
+  </div>
+
+  <!-- ── Stats Infographic ── -->
+  <div class="stats-section">
+    <div class="stats-grid">
+
+      <!-- Day 1 -->
+      <div class="stat-card">
+        <div class="day-label">Day 1</div>
+        <svg class="stat-icon" viewBox="0 0 48 48" fill="none">
+          <circle cx="12" cy="32" r="9" stroke="var(--forest)" stroke-width="2.5"/>
+          <circle cx="36" cy="32" r="9" stroke="var(--forest)" stroke-width="2.5"/>
+          <path d="M12 32L22 16h6l8 16M22 16l4 16M28 16l2-6" stroke="var(--forest)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div class="stat-row">
+          <div class="stat-item">
+            <span class="stat-value">40</span>
+            <span class="stat-label">km</span>
+          </div>
+        </div>
+        <div class="stat-divider"></div>
+        <svg class="stat-icon" viewBox="0 0 48 48" fill="none" style="margin-top:0.4rem">
+          <path d="M4 40L16 20l8 10 8-18 12 28" stroke="var(--ember)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div class="stat-row">
+          <div class="stat-item">
+            <span class="stat-value">200</span>
+            <span class="stat-label">m gain</span>
+          </div>
+        </div>
+        <div class="elev-bar-wrap"><div class="elev-bar" style="width:12%"></div></div>
+        <p class="elev-direction">&uarr; Elevation Gain</p>
+      </div>
+
+      <!-- Day 2 -->
+      <div class="stat-card">
+        <div class="day-label">Day 2</div>
+        <svg class="stat-icon" viewBox="0 0 100 48" fill="none" style="width:80px;height:40px">
+          <!-- Bike -->
+          <circle cx="8" cy="35" r="6" stroke="var(--forest)" stroke-width="2"/>
+          <circle cx="24" cy="35" r="6" stroke="var(--forest)" stroke-width="2"/>
+          <path d="M8 35l7-12h4l6 12M15 23l3 12M19 23l1-4" stroke="var(--forest)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <!-- Slash -->
+          <path d="M38 8L34 44" stroke="var(--forest)" stroke-width="2.5" stroke-linecap="round"/>
+          <!-- Hiker head -->
+          <circle cx="58" cy="10" r="4" stroke="var(--forest)" stroke-width="2"/>
+          <!-- Hiker body -->
+          <path d="M58 14v16" stroke="var(--forest)" stroke-width="2" stroke-linecap="round"/>
+          <!-- Backpack -->
+          <rect x="60" y="16" width="6" height="11" rx="1.5" stroke="var(--forest)" stroke-width="1.8" fill="none"/>
+          <!-- Arms + walking stick -->
+          <path d="M58 20l-7 7" stroke="var(--forest)" stroke-width="2" stroke-linecap="round"/>
+          <path d="M51 27l-3 17" stroke="var(--forest)" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M58 20l5 5" stroke="var(--forest)" stroke-width="2" stroke-linecap="round"/>
+          <!-- Legs -->
+          <path d="M58 30l-6 14M58 30l6 14" stroke="var(--forest)" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <div class="stat-row">
+          <div class="stat-item">
+            <span class="stat-value">25.5</span>
+            <span class="stat-label">km</span>
+          </div>
+        </div>
+        <div class="stat-divider"></div>
+        <svg class="stat-icon" viewBox="0 0 48 48" fill="none" style="margin-top:0.4rem">
+          <path d="M4 44L14 18l8 12 8-22 14 36" stroke="var(--ember)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div class="stat-row">
+          <div class="stat-item">
+            <span class="stat-value">1,440</span>
+            <span class="stat-label">m gain</span>
+          </div>
+        </div>
+        <div class="elev-bar-wrap"><div class="elev-bar" style="width:88%"></div></div>
+        <p class="elev-direction">&uarr; Elevation Gain</p>
+      </div>
+
+      <!-- Day 3 -->
+      <div class="stat-card">
+        <div class="day-label">Day 3</div>
+        <svg class="stat-icon" viewBox="0 0 48 48" fill="none">
+          <circle cx="12" cy="32" r="9" stroke="var(--forest)" stroke-width="2.5"/>
+          <circle cx="36" cy="32" r="9" stroke="var(--forest)" stroke-width="2.5"/>
+          <path d="M12 32L22 16h6l8 16M22 16l4 16M28 16l2-6" stroke="var(--forest)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div class="stat-row">
+          <div class="stat-item">
+            <span class="stat-value">94</span>
+            <span class="stat-label">km</span>
+          </div>
+        </div>
+        <div class="stat-divider"></div>
+        <svg class="stat-icon" viewBox="0 0 48 48" fill="none" style="margin-top:0.4rem">
+          <path d="M4 8l10 26 8-12 8 22 14-36" stroke="var(--ember)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div class="stat-row">
+          <div class="stat-item">
+            <span class="stat-value">1,630</span>
+            <span class="stat-label">m loss</span>
+          </div>
+        </div>
+        <div class="elev-bar-wrap"><div class="elev-bar" style="width:100%"></div></div>
+        <p class="elev-direction">&darr; Elevation Loss</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Alternative Options ── -->
+  <div class="alt-section">
+
+    <div class="alt-card">
+      <h3>Options to make it easier</h3>
+      <ol>
+        <li>Start the route closer to the high point&hellip; like park at Passmore or something?</li>
+        <li>On day 1, pedal further up the road towards the Gwillim Lakes trailhead to reduce the climb the following day&hellip; I&rsquo;m sure there&rsquo;s somewhere alright to sleep up there somewhere.</li>
+        <li>On day 2, instead of riding to Slocan and back down, just head back the way we rode in.</li>
+        <li>Add another camp night at Slocan, to take it super chill and break up the long distance&hellip; even though the bulk of it is downhill.</li>
+        <li>Stay at home and watch netflix.</li>
+      </ol>
+    </div>
+
+    <div class="alt-card alt-card--harder">
+      <h3>
+        <svg viewBox="0 0 32 32" fill="none">
+          <circle cx="16" cy="10" r="5" stroke="var(--ember)" stroke-width="2"/>
+          <path d="M8 28c0-2 2-6 4-8l2 6 2-10 2 10 2-6c2 2 4 6 4 8" stroke="var(--ember)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="11" y1="10" x2="13" y2="12" stroke="var(--ember)" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="21" y1="10" x2="19" y2="12" stroke="var(--ember)" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        Options to make it HARDER!
+        <svg viewBox="0 0 32 32" fill="none">
+          <circle cx="16" cy="10" r="5" stroke="var(--ember)" stroke-width="2"/>
+          <path d="M8 28c0-2 2-6 4-8l2 6 2-10 2 10 2-6c2 2 4 6 4 8" stroke="var(--ember)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="11" y1="10" x2="13" y2="12" stroke="var(--ember)" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="21" y1="10" x2="19" y2="12" stroke="var(--ember)" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </h3>
+      <ol>
+        <li>Start from Nelson&hellip; bike down Granite road and hit the rail trail from there.</li>
+        <li>After coming down from Gwillim Lakes, head North-West towards Farquier, get the ferry to Needles and find a way to ride South towards Castlegar, joining up with the Columbia and Western rail trail, on the West side of Arrow lake.</li>
+      </ol>
+    </div>
+
+  </div>
+</main>
+
+</body>
+</html>

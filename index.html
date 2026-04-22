@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carto, Cranks &amp; Carnage</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --forest: #2d4a3e;
+      --trail: #c5a55a;
+      --dust: #f4efe4;
+      --ember: #d45d2b;
+      --slate: #3a3a3a;
+      --topo-line: rgba(76, 126, 98, 0.18);
+      --topo-line-bold: rgba(76, 126, 98, 0.35);
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--dust);
+      color: var(--slate);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* ── SVG topo map background ── */
+    .topo-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .topo-bg svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ── Map element icons (SVG) ── */
+    .map-icon {
+      position: fixed;
+      z-index: 1;
+      opacity: 0.12;
+      pointer-events: none;
+    }
+    .map-icon svg { width: 100%; height: 100%; }
+
+    .icon-bike-1   { top: 12%; left: 6%;  width: 90px; transform: rotate(-12deg); }
+    .icon-beer-1   { top: 28%; right: 8%; width: 60px; transform: rotate(8deg); }
+    .icon-bike-2   { bottom: 18%; right: 14%; width: 75px; transform: rotate(15deg); }
+    .icon-beer-2   { bottom: 30%; left: 10%; width: 55px; transform: rotate(-5deg); }
+    .icon-compass  { top: 55%; left: 50%; width: 100px; transform: translate(-50%, -50%) rotate(22deg); }
+    .icon-hops     { top: 8%;  right: 30%; width: 50px; transform: rotate(-18deg); }
+    .icon-gear     { bottom: 10%; left: 35%; width: 65px; transform: rotate(30deg); }
+
+    /* ── Animated floating ── */
+    @keyframes drift {
+      0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
+      50%      { transform: translateY(-12px) rotate(var(--r, 0deg)); }
+    }
+    .drift { animation: drift 6s ease-in-out infinite; }
+    .drift-slow { animation: drift 9s ease-in-out infinite; }
+
+    /* ── Content wrapper ── */
+    .content {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* ── Hero ── */
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      background: var(--forest);
+      color: var(--trail);
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 0.4rem 1rem;
+      border-radius: 999px;
+      margin-bottom: 1.5rem;
+      animation: fadeDown 0.8s ease-out;
+    }
+    .hero-badge svg { width: 14px; height: 14px; fill: var(--trail); }
+
+    h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(3rem, 10vw, 7rem);
+      line-height: 0.95;
+      color: var(--forest);
+      letter-spacing: 0.03em;
+      margin-bottom: 0.3rem;
+      animation: fadeDown 1s ease-out;
+    }
+    h1 .amp {
+      color: var(--ember);
+      display: inline-block;
+      transform: rotate(-6deg) scale(1.15);
+      margin: 0 0.05em;
+    }
+
+    .tagline {
+      font-size: clamp(0.95rem, 2vw, 1.2rem);
+      font-weight: 300;
+      color: var(--forest);
+      opacity: 0.7;
+      margin-bottom: 2.5rem;
+      animation: fadeDown 1.2s ease-out;
+    }
+
+    /* ── Divider line ── */
+    .divider {
+      width: 80px;
+      height: 3px;
+      background: linear-gradient(90deg, var(--trail), var(--ember));
+      border-radius: 2px;
+      margin-bottom: 2.5rem;
+      animation: fadeDown 1.4s ease-out;
+    }
+
+    /* ── Feature cards ── */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      max-width: 700px;
+      width: 100%;
+      margin-bottom: 3rem;
+      animation: fadeUp 1.4s ease-out;
+    }
+    .feature-card {
+      background: rgba(255,255,255,0.65);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(45,74,62,0.1);
+      border-radius: 16px;
+      padding: 1.8rem 1.2rem;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .feature-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(45,74,62,0.12);
+    }
+    .feature-card svg {
+      width: 36px;
+      height: 36px;
+      margin-bottom: 0.8rem;
+    }
+    .feature-card h3 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.2rem;
+      color: var(--forest);
+      letter-spacing: 0.05em;
+      margin-bottom: 0.4rem;
+    }
+    .feature-card p {
+      font-size: 0.82rem;
+      line-height: 1.5;
+      opacity: 0.65;
+    }
+
+    /* ── CTA Button ── */
+    .cta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: var(--ember);
+      color: #fff;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.35rem;
+      letter-spacing: 0.1em;
+      padding: 0.9rem 2.2rem;
+      border-radius: 12px;
+      text-decoration: none;
+      transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
+      box-shadow: 0 4px 20px rgba(212, 93, 43, 0.35);
+      animation: fadeUp 1.6s ease-out;
+    }
+    .cta-btn:hover {
+      background: #b94e24;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(212, 93, 43, 0.45);
+    }
+    .cta-btn:active { transform: translateY(0); }
+    .cta-btn svg { width: 20px; height: 20px; fill: #fff; }
+
+    /* ── Footer ── */
+    footer {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      padding: 1.5rem;
+      font-size: 0.72rem;
+      opacity: 0.4;
+      letter-spacing: 0.08em;
+    }
+
+    /* ── Animations ── */
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Mobile optimisations ── */
+    @media (max-width: 640px) {
+      .map-icon { display: none; }
+      .content { padding: 1.5rem 1rem; }
+      .features { gap: 1rem; margin-bottom: 2rem; }
+      .feature-card { padding: 1.4rem 1rem; border-radius: 12px; }
+      .tagline { margin-bottom: 1.8rem; }
+      .divider { margin-bottom: 1.8rem; }
+      .cta-btn { font-size: 1.2rem; padding: 0.8rem 1.8rem; }
+      footer { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════ TOPO MAP BACKGROUND ═══════════ -->
+<div class="topo-bg">
+  <svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" viewBox="0 0 1440 900">
+    <defs>
+      <pattern id="topoSmall" width="60" height="60" patternUnits="userSpaceOnUse">
+        <path d="M0 30 Q15 10 30 30 T60 30" fill="none" stroke="rgba(76,126,98,0.12)" stroke-width="0.8"/>
+        <path d="M0 50 Q20 35 40 50 T80 50" fill="none" stroke="rgba(76,126,98,0.07)" stroke-width="0.5"/>
+      </pattern>
+      <pattern id="topoLarge" width="200" height="200" patternUnits="userSpaceOnUse">
+        <ellipse cx="100" cy="100" rx="80" ry="55" fill="none" stroke="rgba(76,126,98,0.18)" stroke-width="1"/>
+        <ellipse cx="100" cy="100" rx="55" ry="35" fill="none" stroke="rgba(76,126,98,0.14)" stroke-width="0.8"/>
+        <ellipse cx="100" cy="100" rx="30" ry="18" fill="none" stroke="rgba(76,126,98,0.10)" stroke-width="0.6"/>
+      </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="var(--dust)"/>
+    <rect width="100%" height="100%" fill="url(#topoSmall)"/>
+    <rect width="100%" height="100%" fill="url(#topoLarge)"/>
+    <!-- Bold contour lines -->
+    <path d="M-20 200 Q200 120 500 220 T1000 180 T1460 250" fill="none" stroke="rgba(76,126,98,0.22)" stroke-width="1.5"/>
+    <path d="M-20 400 Q300 340 600 420 T1100 370 T1460 430" fill="none" stroke="rgba(76,126,98,0.18)" stroke-width="1.2"/>
+    <path d="M-20 600 Q250 550 550 620 T1050 580 T1460 640" fill="none" stroke="rgba(76,126,98,0.15)" stroke-width="1"/>
+    <path d="M-20 780 Q350 730 700 800 T1460 760" fill="none" stroke="rgba(76,126,98,0.12)" stroke-width="0.8"/>
+    <!-- Trail / route dashed line -->
+    <path d="M0 500 Q200 420 450 480 Q700 540 900 460 Q1100 380 1300 450 Q1440 490 1440 490"
+          fill="none" stroke="var(--trail)" stroke-width="2" stroke-dasharray="12 6" opacity="0.35"/>
+  </svg>
+</div>
+
+<!-- ═══════════ MAP ELEMENT ICONS ═══════════ -->
+<!-- Bike 1 -->
+<div class="map-icon icon-bike-1 drift" style="--r:-12deg">
+  <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="25" cy="65" r="18" stroke="#2d4a3e" stroke-width="3"/>
+    <circle cx="75" cy="65" r="18" stroke="#2d4a3e" stroke-width="3"/>
+    <path d="M25 65 L45 35 L60 35 L75 65 M45 35 L55 65 M60 35 L65 25" stroke="#2d4a3e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="40" y1="35" x2="65" y2="35" stroke="#2d4a3e" stroke-width="3" stroke-linecap="round"/>
+  </svg>
+</div>
+
+<!-- Beer mug 1 -->
+<div class="map-icon icon-beer-1 drift-slow" style="--r:8deg">
+  <svg viewBox="0 0 80 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="10" y="25" width="45" height="60" rx="4" stroke="#2d4a3e" stroke-width="3"/>
+    <path d="M55 40 H65 A8 8 0 0 1 65 70 H55" stroke="#2d4a3e" stroke-width="3"/>
+    <path d="M18 40 Q25 35 32 40 T46 40" stroke="#c5a55a" stroke-width="2" opacity="0.6"/>
+    <line x1="25" y1="15" x2="25" y2="25" stroke="#c5a55a" stroke-width="1.5" opacity="0.4"/>
+    <line x1="32" y1="12" x2="32" y2="25" stroke="#c5a55a" stroke-width="1.5" opacity="0.4"/>
+    <line x1="39" y1="16" x2="39" y2="25" stroke="#c5a55a" stroke-width="1.5" opacity="0.4"/>
+  </svg>
+</div>
+
+<!-- Bike 2 -->
+<div class="map-icon icon-bike-2 drift" style="--r:15deg">
+  <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="25" cy="65" r="18" stroke="#2d4a3e" stroke-width="3"/>
+    <circle cx="75" cy="65" r="18" stroke="#2d4a3e" stroke-width="3"/>
+    <path d="M25 65 L45 35 L60 35 L75 65 M45 35 L55 65 M60 35 L65 25" stroke="#2d4a3e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="40" y1="35" x2="65" y2="35" stroke="#2d4a3e" stroke-width="3" stroke-linecap="round"/>
+  </svg>
+</div>
+
+<!-- Beer bottle 2 -->
+<div class="map-icon icon-beer-2 drift-slow" style="--r:-5deg">
+  <svg viewBox="0 0 60 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="15" y="40" width="30" height="50" rx="4" stroke="#2d4a3e" stroke-width="3"/>
+    <path d="M22 40 V28 L20 20 H40 L38 28 V40" stroke="#2d4a3e" stroke-width="3" stroke-linejoin="round"/>
+    <ellipse cx="30" cy="18" rx="6" ry="3" stroke="#2d4a3e" stroke-width="2"/>
+    <line x1="22" y1="55" x2="38" y2="55" stroke="#c5a55a" stroke-width="1.5" opacity="0.5"/>
+    <line x1="22" y1="60" x2="38" y2="60" stroke="#c5a55a" stroke-width="1.5" opacity="0.5"/>
+  </svg>
+</div>
+
+<!-- Compass rose -->
+<div class="map-icon icon-compass drift-slow" style="--r:22deg">
+  <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="50" cy="50" r="40" stroke="#2d4a3e" stroke-width="2"/>
+    <circle cx="50" cy="50" r="32" stroke="#2d4a3e" stroke-width="1"/>
+    <polygon points="50,15 55,45 50,38 45,45" fill="#d45d2b" opacity="0.5"/>
+    <polygon points="50,85 45,55 50,62 55,55" fill="#2d4a3e" opacity="0.3"/>
+    <polygon points="15,50 45,45 38,50 45,55" fill="#2d4a3e" opacity="0.3"/>
+    <polygon points="85,50 55,55 62,50 55,45" fill="#2d4a3e" opacity="0.3"/>
+    <text x="50" y="12" text-anchor="middle" font-size="8" fill="#2d4a3e" font-family="Inter" font-weight="600">N</text>
+  </svg>
+</div>
+
+<!-- Hops -->
+<div class="map-icon icon-hops drift" style="--r:-18deg">
+  <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="40" cy="30" rx="12" ry="16" stroke="#2d4a3e" stroke-width="2" transform="rotate(0 40 30)"/>
+    <ellipse cx="28" cy="40" rx="12" ry="16" stroke="#2d4a3e" stroke-width="2" transform="rotate(-30 28 40)"/>
+    <ellipse cx="52" cy="40" rx="12" ry="16" stroke="#2d4a3e" stroke-width="2" transform="rotate(30 52 40)"/>
+    <ellipse cx="40" cy="52" rx="10" ry="13" stroke="#2d4a3e" stroke-width="2"/>
+    <line x1="40" y1="60" x2="40" y2="78" stroke="#2d4a3e" stroke-width="2"/>
+    <path d="M36 70 Q40 65 44 70" stroke="#2d4a3e" stroke-width="1.5"/>
+  </svg>
+</div>
+
+<!-- Chainring / gear -->
+<div class="map-icon icon-gear drift-slow" style="--r:30deg">
+  <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="50" cy="50" r="30" stroke="#2d4a3e" stroke-width="2.5"/>
+    <circle cx="50" cy="50" r="12" stroke="#2d4a3e" stroke-width="2"/>
+    <circle cx="50" cy="50" r="4" fill="#2d4a3e" opacity="0.3"/>
+    <!-- Teeth -->
+    <g stroke="#2d4a3e" stroke-width="2">
+      <line x1="50" y1="17" x2="50" y2="20"/>
+      <line x1="66" y1="22" x2="64" y2="25"/>
+      <line x1="78" y1="36" x2="75" y2="38"/>
+      <line x1="83" y1="50" x2="80" y2="50"/>
+      <line x1="78" y1="64" x2="75" y2="62"/>
+      <line x1="66" y1="78" x2="64" y2="75"/>
+      <line x1="50" y1="83" x2="50" y2="80"/>
+      <line x1="34" y1="78" x2="36" y2="75"/>
+      <line x1="22" y1="64" x2="25" y2="62"/>
+      <line x1="17" y1="50" x2="20" y2="50"/>
+      <line x1="22" y1="36" x2="25" y2="38"/>
+      <line x1="34" y1="22" x2="36" y2="25"/>
+    </g>
+  </svg>
+</div>
+
+<!-- ═══════════ PAGE CONTENT ═══════════ -->
+<div class="content">
+
+  <div class="hero-badge">
+    <svg viewBox="0 0 16 16"><path d="M8 0l2 5h5l-4 3.5 1.5 5L8 10.5 3.5 13.5 5 8.5 1 5h5z"/></svg>
+    Bikepacking Routes for Rogues
+  </div>
+
+  <h1>Carto, Cranks<br><span class="amp">&amp;</span> Carnage</h1>
+  <p class="tagline">Plan. Pedal. Pickled.</p>
+
+  <div class="divider"></div>
+
+  <div class="features">
+    <div class="feature-card">
+      <svg viewBox="0 0 48 48" fill="none">
+        <path d="M24 4L4 44h40L24 4z" stroke="var(--forest)" stroke-width="2.5" stroke-linejoin="round"/>
+        <path d="M14 44l6-14 5 8 7-18 8 24" stroke="var(--ember)" stroke-width="2" stroke-linejoin="round" opacity="0.7"/>
+        <circle cx="34" cy="16" r="4" stroke="var(--trail)" stroke-width="2"/>
+      </svg>
+      <h3>Plan</h3>
+      <p>Catch you outside quickie mart, the mini-mall, or time and space.</p>
+    </div>
+    <div class="feature-card">
+      <svg viewBox="0 0 48 48" fill="none">
+        <circle cx="12" cy="32" r="9" stroke="var(--forest)" stroke-width="2.5"/>
+        <circle cx="36" cy="32" r="9" stroke="var(--forest)" stroke-width="2.5"/>
+        <path d="M12 32L22 16h6l8 16M22 16l4 16M28 16l2-6" stroke="var(--forest)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <line x1="19" y1="16" x2="30" y2="16" stroke="var(--forest)" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+      <h3>Pedal</h3>
+      <p>Gnawin' on his dog toy, pocket full of deer blood. The only thing that's stoppin' him was Dokken in his earbuds.</p>
+    </div>
+    <div class="feature-card">
+      <svg viewBox="0 0 48 48" fill="none">
+        <path d="M10 8L13 42a3 3 0 003 3h16a3 3 0 003-3l3-34" stroke="var(--forest)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M10 8h28" stroke="var(--forest)" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M13 16q6-4 11 0t11 0" stroke="var(--trail)" stroke-width="2" opacity="0.7"/>
+      </svg>
+      <h3>Pickled</h3>
+      <p>Salt in his wounds. Rice in his stomach. Price on his head. Lice in his mullet.</p>
+    </div>
+  </div>
+
+  <h2 style="font-family:'Bebas Neue',sans-serif; font-size:1.8rem; color:var(--forest); letter-spacing:0.06em; margin-bottom:1rem; animation:fadeUp 1.5s ease-out;">Routes for Rogues</h2>
+
+  <a href="gwillim-grind.html" class="cta-btn">
+    <svg viewBox="0 0 24 24"><path d="M13 3L4 14h7v7l9-11h-7z"/></svg>
+    Gwillim Grind
+  </a>
+
+</div>
+
+<footer>
+  &copy; Carto, Cranks &amp; Carnage &mdash; Ride far, drink local
+</footer>
+
+</body>
+</html>
